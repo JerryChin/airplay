@@ -4,12 +4,14 @@ import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Point;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.media.MediaRecorder;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Environment;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
@@ -17,10 +19,10 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.SparseIntArray;
+import android.view.Display;
 import android.view.Surface;
 import android.view.View;
 import android.widget.Toast;
@@ -29,13 +31,6 @@ import android.widget.ToggleButton;
 import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
-
-//    @Override
-//    protected void onCreate(Bundle savedInstanceState) {
-//        super.onCreate(savedInstanceState);
-//        setContentView(R.layout.activity_main);
-//    }
-
     private static final String TAG = "MainActivity";
     private static final int REQUEST_CODE = 1000;
     private int mScreenDensity;
@@ -49,6 +44,9 @@ public class MainActivity extends AppCompatActivity {
     private MediaRecorder mMediaRecorder;
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
     private static final int REQUEST_PERMISSIONS = 10;
+
+    private int displayWidth = 720;
+    private int displayHeight = 1280;
     static {
         ORIENTATIONS.append(Surface.ROTATION_0, 90);
         ORIENTATIONS.append(Surface.ROTATION_90, 0);
@@ -58,6 +56,17 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        Display display = getWindowManager().getDefaultDisplay();
+
+        Point point = new Point();
+        display.getRealSize(point);
+        Log.d(TAG, "width = " + point.x + ",height = " + point.y);
+
+        displayWidth = point.x;
+        displayHeight = point.y;
+
+
         setContentView(R.layout.activity_main);
         DisplayMetrics metrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(metrics);
@@ -141,7 +150,7 @@ public class MainActivity extends AppCompatActivity {
     }
     private VirtualDisplay createVirtualDisplay() {
         return mMediaProjection.createVirtualDisplay("MainActivity",
-                DISPLAY_WIDTH, DISPLAY_HEIGHT, mScreenDensity,
+                displayWidth, displayHeight, mScreenDensity,
                 DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
                 mMediaRecorder.getSurface(), null /*Callbacks*/, null
                 /*Handler*/);
@@ -154,10 +163,10 @@ public class MainActivity extends AppCompatActivity {
             mMediaRecorder.setOutputFile(Environment
                     .getExternalStoragePublicDirectory(Environment
                             .DIRECTORY_DOWNLOADS) + "/video.mp4");
-            mMediaRecorder.setVideoSize(DISPLAY_WIDTH, DISPLAY_HEIGHT);
+            mMediaRecorder.setVideoSize(displayWidth, displayHeight);
             mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
             mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
-            mMediaRecorder.setVideoEncodingBitRate(512 * 1000);
+            mMediaRecorder.setVideoEncodingBitRate(10 * 1024 * 1000);
             mMediaRecorder.setVideoFrameRate(30);
             int rotation = getWindowManager().getDefaultDisplay().getRotation();
             int orientation = ORIENTATIONS.get(rotation + 90);
