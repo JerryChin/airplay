@@ -12,7 +12,7 @@ import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
+import android.os.ParcelFileDescriptor;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
@@ -28,6 +28,7 @@ import android.view.View;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
@@ -53,9 +54,21 @@ public class MainActivity extends AppCompatActivity {
         ORIENTATIONS.append(Surface.ROTATION_180, 270);
         ORIENTATIONS.append(Surface.ROTATION_270, 180);
     }
+
+
+    private void run() throws IOException {
+
+
+    }
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        try {
+            run();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         Display display = getWindowManager().getDefaultDisplay();
 
@@ -160,9 +173,20 @@ public class MainActivity extends AppCompatActivity {
             mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
             mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
             mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-            mMediaRecorder.setOutputFile(Environment
-                    .getExternalStoragePublicDirectory(Environment
-                            .DIRECTORY_DOWNLOADS) + "/video.mp4");
+
+            ParcelFileDescriptor[] pipes = ParcelFileDescriptor.createPipe();
+            ParcelFileDescriptor read = pipes[0];
+            ParcelFileDescriptor write = pipes[1];
+//            FileOutputStream out = new FileOutputStream(write.getFileDescriptor());
+            mMediaRecorder.setOutputFile(write.getFileDescriptor());
+
+
+            FileInputStream in = new FileInputStream(read.getFileDescriptor());
+
+
+//            mMediaRecorder.setOutputFile(Environment
+//                    .getExternalStoragePublicDirectory(Environment
+//                            .DIRECTORY_DOWNLOADS) + "/video.mp4");
             mMediaRecorder.setVideoSize(displayWidth, displayHeight);
             mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
             mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
